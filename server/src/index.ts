@@ -8,7 +8,15 @@ import validateRouter from "./routes/validate.js";
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
-app.use(cors());
+const allowedOrigins = process.env.CLIENT_ORIGIN?.split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: allowedOrigins?.length ? allowedOrigins : true,
+  })
+);
 app.use(express.json({ limit: "2mb" }));
 
 app.get("/api/health", (_req, res) => {

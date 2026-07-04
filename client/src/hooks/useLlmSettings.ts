@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { validateApiKey } from "@/api/client";
+import { fetchModels, validateApiKey } from "@/api/client";
 import type {
   ApiKeyValidationStatus,
   LlmConfig,
@@ -39,8 +39,7 @@ export function useLlmSettings() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    fetch("/api/models")
-      .then((r) => r.json())
+    fetchModels()
       .then((data: ModelsResponse) => {
         setModels(data);
         if (data.platformAvailable && data.platform.length > 0) {
