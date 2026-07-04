@@ -7,6 +7,7 @@ interface ConfirmationStageProps {
   onConfirm: () => void;
   onBack: () => void;
   loading: boolean;
+  error?: string | null;
 }
 
 export function ConfirmationStage({
@@ -16,9 +17,15 @@ export function ConfirmationStage({
   onConfirm,
   onBack,
   loading,
+  error,
 }: ConfirmationStageProps) {
   return (
     <div className="max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-10 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+      {error && (
+        <div className="mb-4 rounded-xl border border-red-500/40 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          {error}
+        </div>
+      )}
       <h2 className="font-serif-display text-2xl sm:text-4xl text-white mb-2 tracking-tight">
         AI Comprehension
       </h2>

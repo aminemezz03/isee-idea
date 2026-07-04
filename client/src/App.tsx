@@ -67,6 +67,7 @@ function App() {
   );
   const [analysis, setAnalysis] = useState<AnalysisResponse | null>(null);
   const [activeId, setActiveId] = useState<string | undefined>();
+  const [scoutError, setScoutError] = useState<string | null>(null);
 
   const llmPanel = (
     <LlmSettingsPanel
@@ -95,6 +96,7 @@ function App() {
 
       setLoadingPhase("understand");
       setLoading(true);
+      setScoutError(null);
       setPrompt(idea);
       try {
         const result = await understandIdea(idea, llm.config);
@@ -110,7 +112,9 @@ function App() {
         setActiveId(id);
         setStage("confirm");
       } catch (e) {
-        alert(e instanceof Error ? e.message : "Failed to understand idea.");
+        const msg = e instanceof Error ? e.message : "Failed to understand idea.";
+        setScoutError(msg);
+        alert(msg);
       } finally {
         setLoading(false);
       }
@@ -129,6 +133,7 @@ function App() {
 
     setLoadingPhase("analyze");
     setLoading(true);
+    setScoutError(null);
     try {
       const result = await analyzeIdea(prompt, llm.config, correction || undefined);
       setAnalysis(result);
@@ -143,7 +148,11 @@ function App() {
       });
       setStage("dashboard");
     } catch (e) {
-      alert(e instanceof Error ? e.message : "Failed to run deep research.");
+      const msg = e instanceof Error ? e.message : "Failed to run deep research.";
+      setScoutError(msg);
+      setStage("confirm");
+      setAnalysis(null);
+      alert(msg);
     } finally {
       setLoading(false);
     }
@@ -245,10 +254,25 @@ function App() {
                 onConfirm={handleConfirm}
                 onBack={handleNewScout}
                 loading={loading}
+                error={scoutError}
               />
             )}
             {stage === "dashboard" && analysis && (
               <BentoDashboard analysis={analysis} onNewScout={handleNewScout} />
+            )}
+            {stage === "dashboard" && !analysis && (
+              <div className="max-w-lg mx-auto px-4 py-16 text-center">
+                <p className="text-white/70 mb-4">
+                  {scoutError ?? "Something went wrong loading your dashboard."}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setStage("confirm")}
+                  className="glass-btn"
+                >
+                  Back to confirm
+                </button>
+              </div>
             )}
           </div>
         </div>
