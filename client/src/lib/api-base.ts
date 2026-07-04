@@ -1,6 +1,8 @@
-/** Empty in dev (Vite proxy). Set to your API URL in production (e.g. Render). */
+/**
+ * Dev: relative /api → Vite proxy → localhost:3001
+ * Prod: relative /api → Netlify _redirects proxy → Render (VITE_API_URL used at build only)
+ */
 export function apiUrl(path: string): string {
-  const base = import.meta.env.VITE_API_URL?.replace(/\/$/, "") ?? "";
   const normalized = path.startsWith("/") ? path : `/${path}`;
-  return `${base}${normalized}`;
+  return normalized;
 }

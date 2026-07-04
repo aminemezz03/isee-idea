@@ -6,8 +6,5 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# SPA fallback — serve index.html for all routes
-[[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+# API proxy + SPA redirects are written to dist/_redirects at build time
+# (requires VITE_API_URL env var on Netlify)

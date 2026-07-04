@@ -89,7 +89,14 @@ export function useLlmSettings() {
           );
         }
       })
-      .catch(() => setModels(null))
+      .catch(() => {
+        setModels(null);
+        setApiKeyMessage(
+          import.meta.env.PROD
+            ? "Could not load isee models. Redeploy Netlify after setting VITE_API_URL, or check Render is running."
+            : "Could not load models. Is the server running?"
+        );
+      })
       .finally(() => setModelsLoading(false));
   }, []);
 
