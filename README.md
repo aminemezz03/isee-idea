@@ -19,6 +19,8 @@ Copy `server/.env.example` to `server/.env` and set API keys for platform models
 - `GEMINI_API_KEY` — Google Gemini models
 - `OPENAI_API_KEY` — GPT-4o models
 - `ANTHROPIC_API_KEY` — Claude models
+- `OPENROUTER_API_KEY` — OpenRouter free/paid models
+- `OLLAMA_API_KEY` — Ollama Cloud models
 
 Users can also choose **Your API Key** in the app and bring their own provider key (stored locally in the browser).
 
