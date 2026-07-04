@@ -1,0 +1,154 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-serif-display: "Instrument Serif", ui-serif, Georgia, serif;
+}
+
+body {
+  @apply bg-black text-white font-sans antialiased overflow-x-hidden;
+  min-height: 100dvh;
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+#root {
+  min-height: 100dvh;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.font-serif-display {
+  font-family: var(--font-serif-display);
+}
+
+/* ── Glass utilities ── */
+.glass {
+  @apply bg-white/10 backdrop-blur-xl border border-white/20 shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.2)];
+}
+
+.glass-card {
+  @apply bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-[0_8px_32px_rgba(0,0,0,0.35),inset_0_1px_0_rgba(255,255,255,0.15)];
+}
+
+.glass-card-accent {
+  @apply bg-indigo-500/15 backdrop-blur-xl border border-indigo-400/25 rounded-2xl shadow-[0_8px_32px_rgba(79,70,229,0.2),inset_0_1px_0_rgba(255,255,255,0.12)];
+}
+
+.glass-card-emerald {
+  @apply bg-emerald-500/10 backdrop-blur-xl border border-emerald-400/20 rounded-2xl shadow-[0_8px_32px_rgba(16,185,129,0.15),inset_0_1px_0_rgba(255,255,255,0.1)];
+}
+
+.glass-card-teal {
+  @apply bg-teal-500/10 backdrop-blur-xl border border-teal-400/20 rounded-2xl shadow-[0_8px_32px_rgba(20,184,166,0.15),inset_0_1px_0_rgba(255,255,255,0.1)];
+}
+
+.glass-btn {
+  @apply bg-white/10 backdrop-blur-xl border border-white/25 rounded-full text-white font-medium px-5 py-2.5 min-h-11 transition hover:bg-white/20 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:pointer-events-none;
+}
+
+.glass-btn-solid {
+  @apply bg-white rounded-full text-black font-medium px-5 py-2.5 min-h-11 transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
+}
+
+/* ── Loading animations ── */
+@keyframes loading-ring-pulse {
+  0%, 100% { transform: scale(1); opacity: 0.4; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
+
+@keyframes loading-ring-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes loading-orb-glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.6), 0 0 60px rgba(255, 255, 255, 0.1); }
+}
+
+@keyframes loading-progress {
+  0% { transform: translateX(-100%); width: 40%; }
+  50% { width: 70%; }
+  100% { transform: translateX(250%); width: 40%; }
+}
+
+@keyframes loading-step-fade {
+  0% { opacity: 0; transform: translateY(6px); }
+  15% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-6px); }
+}
+
+@keyframes loading-icon-breathe {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+@keyframes loading-sparkle-float {
+  0%, 100% { transform: translateY(0) rotate(0deg); opacity: 0.4; }
+  50% { transform: translateY(-6px) rotate(15deg); opacity: 1; }
+}
+
+@keyframes loading-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.loading-overlay {
+  animation: loading-overlay-in 0.35s ease-out;
+}
+
+.loading-ring-1 {
+  animation: loading-ring-spin 8s linear infinite;
+}
+
+.loading-ring-2 {
+  animation: loading-ring-spin 6s linear infinite reverse;
+}
+
+.loading-ring-3 {
+  animation: loading-ring-pulse 2.5s ease-in-out infinite;
+}
+
+.glass-orb-center {
+  animation: loading-orb-glow 2s ease-in-out infinite;
+}
+
+.loading-icon-pulse {
+  animation: loading-icon-breathe 2s ease-in-out infinite;
+}
+
+.loading-progress-bar {
+  animation: loading-progress 2s ease-in-out infinite;
+}
+
+.loading-step-text {
+  animation: loading-step-fade 2.2s ease-in-out;
+}
+
+.loading-sparkle {
+  animation: loading-sparkle-float 2s ease-in-out infinite;
+}
+
+.loading-sparkle-delay {
+  animation: loading-sparkle-float 2s ease-in-out 0.8s infinite;
+}
+
+/* Staggered card entrance */
+@keyframes glass-card-in {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.glass-card-animate {
+  animation: glass-card-in 0.5s ease-out both;
+}
