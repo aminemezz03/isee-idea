@@ -1,6 +1,7 @@
 import { Bot, Key, Sparkles, ChevronDown, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { useTranslation } from "react-i18next";
 import { GLASS } from "@/lib/theme";
 import type {
   ApiKeyValidationStatus,
@@ -73,6 +74,7 @@ export function LlmSettingsPanel({
   onPlatformModelSelect,
   onValidateKey,
 }: LlmSettingsPanelProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [pos, setPos] = useState({ top: 0, left: 0 });
   const rootRef = useRef<HTMLDivElement>(null);
@@ -117,7 +119,7 @@ export function LlmSettingsPanel({
     <div
       ref={panelRef}
       role="dialog"
-      aria-label="AI model settings"
+      aria-label={t("llm.settingsAria")}
       style={{ top: pos.top, left: pos.left, maxWidth: "calc(100vw - 1rem)", maxHeight: "calc(100dvh - 1rem)" }}
       className="fixed z-[9999] w-72 rounded-2xl border border-white/20 bg-slate-950/95 p-3 shadow-[0_16px_48px_rgba(0,0,0,0.6)] backdrop-blur-xl space-y-3 text-white overflow-y-auto overscroll-contain"
       onMouseDown={(e) => e.stopPropagation()}
@@ -135,7 +137,7 @@ export function LlmSettingsPanel({
           active={config.mode === "custom"}
           onClick={() => onModeChange("custom")}
           icon={<Key size={11} />}
-          label="Your key"
+          label={t("llm.yourKey")}
         />
       </div>
 
@@ -160,7 +162,7 @@ export function LlmSettingsPanel({
               </button>
             ))
           ) : (
-            <p className="text-xs text-white/50 px-1">No platform models. Use your key.</p>
+            <p className="text-xs text-white/50 px-1">{t("llm.noPlatformModels")}</p>
           )}
         </div>
       ) : (
@@ -184,7 +186,7 @@ export function LlmSettingsPanel({
 
           <label className="block">
             <span className="font-mono text-[10px] uppercase text-white/40 mb-1 block">
-              API key
+              {t("llm.apiKey")}
             </span>
             <div className="relative">
               <input
@@ -194,7 +196,7 @@ export function LlmSettingsPanel({
                 value={config.apiKey ?? ""}
                 onChange={(e) => onApiKeyChange(e.target.value)}
                 onPaste={(e) => e.stopPropagation()}
-                placeholder="Paste your API key here"
+                placeholder={t("llm.apiKeyPlaceholder")}
                 className={`w-full bg-slate-900 border rounded-lg px-2 py-2 pr-7 text-xs text-white outline-none placeholder:text-white/30 font-mono transition ${
                   apiKeyStatus === "valid"
                     ? "border-emerald-500/60 focus:border-emerald-400/60"
@@ -232,17 +234,17 @@ export function LlmSettingsPanel({
             {apiKeyStatus === "checking" ? (
               <>
                 <Loader2 size={11} className="animate-spin" />
-                Verifying…
+                {t("llm.verifying")}
               </>
             ) : (
-              "Verify API key"
+              t("llm.verifyKey")
             )}
           </button>
 
           {apiKeyStatus === "valid" && availableCustomModels.length > 0 && (
             <div>
               <span className="font-mono text-[10px] uppercase text-emerald-400/80 mb-1 block">
-                Choose a model ({availableCustomModels.length})
+                {t("llm.chooseModel", { count: availableCustomModels.length })}
               </span>
               <div className="space-y-1 max-h-36 overflow-y-auto">
                 {availableCustomModels.map((m) => (
@@ -266,7 +268,7 @@ export function LlmSettingsPanel({
 
           {apiKeyStatus !== "valid" && (
             <p className="text-[10px] text-white/35 font-mono">
-              Verify your key to load available models.
+              {t("llm.verifyToLoad")}
             </p>
           )}
         </div>
@@ -282,7 +284,7 @@ export function LlmSettingsPanel({
         onClick={() => setOpen((v) => !v)}
         title={
           config.mode === "custom"
-            ? `Your key · ${pillLabel}`
+            ? t("llm.yourKeyTitle", { model: pillLabel })
             : pillLabel
         }
         className={`${GLASS} flex items-center gap-1 rounded-full pl-2 pr-1.5 py-1 min-h-9 text-white transition hover:bg-white/15 max-w-[5.5rem] sm:max-w-[9rem] shrink-0`}
@@ -290,7 +292,7 @@ export function LlmSettingsPanel({
         <Bot size={11} className="text-indigo-300 shrink-0" />
         {config.mode === "custom" && <ValidationBadge status={apiKeyStatus} />}
         <span className="text-[10px] sm:text-[11px] font-mono truncate leading-none">
-          {modelsLoading ? "…" : pillLabel}
+          {modelsLoading ? t("common.loading") : pillLabel}
         </span>
         <ChevronDown
           size={10}

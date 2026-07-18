@@ -143,25 +143,42 @@ export const ANALYSIS_SCHEMA = `{
   }
 }`;
 
-export function buildUnderstandPrompt(prompt: string): string {
-  return `You are an expert startup analyst. Analyze this raw project idea and return ONLY valid JSON matching this schema (no markdown):
+export function buildUnderstandPrompt(
+  prompt: string,
+  languageInstruction: string
+): string {
+  return `${languageInstruction}
+
+You are an expert startup analyst. Analyze this raw project idea and return ONLY valid JSON matching this schema (no markdown):
 ${UNDERSTAND_SCHEMA}
 
 Project idea:
 """
 ${prompt}
-"""`;
+"""
+
+Remember: ${languageInstruction}`;
 }
 
 export function buildAnalyzePrompt(
   prompt: string,
-  correction?: string
+  correction: string | undefined,
+  languageInstruction: string
 ): string {
-  const correctionBlock = correction?.trim()
-    ? `\nUser correction/refinement:\n"""\n${correction}\n"""`
+  const refinement = correction?.trim();
+  const correctionBlock = refinement
+    ? `
+
+CRITICAL USER REFINEMENT — this OVERRIDES the original idea wherever they conflict:
+"""
+${refinement}
+"""
+You MUST apply this refinement across the entire analysis (market focus, demographics, distribution, scoring, and recommendations). Do not ignore it.`
     : "";
 
-  return `You are an expert startup analyst performing deep market research. Return ONLY valid JSON matching this schema (no markdown):
+  return `${languageInstruction}
+
+You are an expert startup analyst performing deep market research. Return ONLY valid JSON matching this schema (no markdown):
 ${ANALYSIS_SCHEMA}
 
 Original project idea:
@@ -169,7 +186,9 @@ Original project idea:
 ${prompt}
 """${correctionBlock}
 
-Score each breakdown dimension 0.0-10.0. Overall score 0.0-10.0. Be specific and actionable.`;
+Score each breakdown dimension 0.0-10.0. Overall score 0.0-10.0. Be specific and actionable.
+
+Remember: ${languageInstruction}`;
 }
 
 export function parseJsonResponse<T>(text: string): T {

@@ -1,6 +1,7 @@
 import { Router } from "express";
 import type { AnalysisResponse, UnderstandResponse } from "../types.js";
 import type { LlmConfig } from "../llm-types.js";
+import { parseLocale, t, type Locale } from "../i18n.js";
 import {
   buildAnalyzePrompt,
   buildUnderstandPrompt,
@@ -15,15 +16,15 @@ import {
 
 const router = Router();
 
-function formatLlmError(err: unknown): string {
-  const msg = err instanceof Error ? err.message : "Unknown AI error";
+function formatLlmError(err: unknown, locale: Locale): string {
+  const msg = err instanceof Error ? err.message : t(locale).unknownAiError;
 
   if (msg.startsWith("Ollama error:")) {
     if (msg.includes("401") || msg.includes("403")) {
-      return "Invalid Ollama API key.";
+      return t(locale).invalidOllamaKey;
     }
     if (msg.includes("429")) {
-      return "Ollama rate limit reached. Wait a moment and try again.";
+      return t(locale).ollamaRateLimit;
     }
     return msg.replace(/^Ollama error:\s*\d+\s*/, "").slice(0, 220);
   }
@@ -34,16 +35,17 @@ function formatLlmError(err: unknown): string {
       const status = Number(match[1]);
       const body = match[2]?.trim() ?? msg;
       return formatOpenRouterErrorMessage(
-        parseOpenRouterError(status, body)
+        parseOpenRouterError(status, body),
+        locale
       );
     }
   }
 
-  if (msg.includes("404")) return "Model not found. Pick a different model in AI settings.";
-  if (msg.includes("402")) return "Insufficient OpenRouter credits. Try a free model (marked :free).";
-  if (msg.includes("401") || msg.includes("403")) return "Invalid API key for the selected provider.";
+  if (msg.includes("404")) return t(locale).modelNotFound;
+  if (msg.includes("402")) return t(locale).insufficientCredits;
+  if (msg.includes("401") || msg.includes("403")) return t(locale).invalidApiKey;
   if (msg.includes("429") || msg.includes("rate-limited") || msg.includes("rate limit")) {
-    return "This free model is temporarily rate-limited. Wait a minute and try again, or switch to “OpenRouter Free” in AI settings.";
+    return t(locale).rateLimited;
   }
 
   return msg.length > 200 ? msg.slice(0, 200) + "…" : msg;
@@ -52,12 +54,13 @@ function formatLlmError(err: unknown): string {
 async function runLlmJson<T>(
   prompt: string,
   llm: LlmConfig,
-  parse: (raw: string) => T
+  parse: (raw: string) => T,
+  locale: Locale
 ): Promise<T> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
     try {
-      const raw = await callLlm(prompt, llm);
+      const raw = await callLlm(prompt, llm, locale);
       return parse(raw);
     } catch (err) {
       lastErr = err;
@@ -73,62 +76,74 @@ async function runLlmJson<T>(
 
 router.post("/understand-idea", async (req, res) => {
   try {
-    const { prompt, llm: llmRaw } = req.body as {
+    const { prompt, llm: llmRaw, locale: localeRaw } = req.body as {
       prompt?: string;
       llm?: unknown;
+      locale?: unknown;
     };
+    const locale = parseLocale(localeRaw);
 
     if (!prompt?.trim()) {
-      res.status(400).json({ error: "prompt is required" });
+      res.status(400).json({ error: t(locale).promptRequired });
       return;
     }
 
     const llm = validateLlmConfig(llmRaw);
     if (!llm) {
-      res.status(400).json({ error: "Valid llm configuration is required" });
+      res.status(400).json({ error: t(locale).llmRequired });
       return;
     }
 
     const data = await runLlmJson(
-      buildUnderstandPrompt(prompt.trim()),
+      buildUnderstandPrompt(prompt.trim(), t(locale).languageInstruction),
       llm,
-      (raw) => parseJsonResponse<UnderstandResponse>(raw)
+      (raw) => parseJsonResponse<UnderstandResponse>(raw),
+      locale
     );
     res.json(data);
   } catch (err) {
     console.error("understand-idea error:", err);
-    res.status(502).json({ error: formatLlmError(err) });
+    const locale = parseLocale(req.body?.locale);
+    res.status(502).json({ error: formatLlmError(err, locale) });
   }
 });
 
 router.post("/analyze-idea", async (req, res) => {
   try {
-    const { prompt, correction, llm: llmRaw } = req.body as {
+    const { prompt, correction, llm: llmRaw, locale: localeRaw } = req.body as {
       prompt?: string;
       correction?: string;
       llm?: unknown;
+      locale?: unknown;
     };
+    const locale = parseLocale(localeRaw);
 
     if (!prompt?.trim()) {
-      res.status(400).json({ error: "prompt is required" });
+      res.status(400).json({ error: t(locale).promptRequired });
       return;
     }
 
     const llm = validateLlmConfig(llmRaw);
     if (!llm) {
-      res.status(400).json({ error: "Valid llm configuration is required" });
+      res.status(400).json({ error: t(locale).llmRequired });
       return;
     }
 
     const data = await runLlmJson(
-      buildAnalyzePrompt(prompt.trim(), correction?.trim()),
+      buildAnalyzePrompt(
+        prompt.trim(),
+        correction?.trim(),
+        t(locale).languageInstruction
+      ),
       llm,
-      (raw) => parseJsonResponse<AnalysisResponse>(raw)
+      (raw) => parseJsonResponse<AnalysisResponse>(raw),
+      locale
     );
     res.json(data);
   } catch (err) {
     console.error("analyze-idea error:", err);
-    res.status(502).json({ error: formatLlmError(err) });
+    const locale = parseLocale(req.body?.locale);
+    res.status(502).json({ error: formatLlmError(err, locale) });
   }
 });
 

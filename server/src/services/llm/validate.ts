@@ -1,4 +1,5 @@
 import type { LlmProvider } from "../../llm-types.js";
+import { parseLocale, t, type Locale } from "../../i18n.js";
 import { listProviderModels, type ProviderModel } from "./list-models.js";
 
 export interface ValidateResult {
@@ -9,15 +10,17 @@ export interface ValidateResult {
 
 export async function validateProviderApiKey(
   provider: LlmProvider,
-  apiKey: string
+  apiKey: string,
+  localeRaw: Locale | string = "en"
 ): Promise<ValidateResult> {
+  const locale = parseLocale(localeRaw);
   try {
     const models = await listProviderModels(provider, apiKey);
 
     if (models.length === 0) {
       return {
         valid: false,
-        message: "API key accepted but no models were returned for this provider.",
+        message: t(locale).noModelsReturned,
       };
     }
 
@@ -34,13 +37,13 @@ export async function validateProviderApiKey(
 
     return {
       valid: true,
-      message: `${providerName} API key is valid. ${models.length} models available.`,
+      message: t(locale).keyValid(providerName, models.length),
       models,
     };
   } catch (err) {
     return {
       valid: false,
-      message: err instanceof Error ? err.message : "API key validation failed.",
+      message: err instanceof Error ? err.message : t(locale).validationFailed,
     };
   }
 }

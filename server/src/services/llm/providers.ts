@@ -1,14 +1,19 @@
 import type { LlmProvider } from "../../llm-types.js";
 
+const DEFAULT_SYSTEM =
+  "You are a startup analyst. Always respond with valid JSON only, no markdown fences.";
+
 async function callGemini(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system: string
 ): Promise<string> {
   const { GoogleGenerativeAI } = await import("@google/generative-ai");
   const genAI = new GoogleGenerativeAI(apiKey);
   const generativeModel = genAI.getGenerativeModel({
     model,
+    systemInstruction: system,
     generationConfig: { responseMimeType: "application/json" },
   });
   const result = await generativeModel.generateContent(prompt);
@@ -18,7 +23,8 @@ async function callGemini(
 async function callOpenAI(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system: string
 ): Promise<string> {
   const res = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -29,10 +35,7 @@ async function callOpenAI(
     body: JSON.stringify({
       model,
       messages: [
-        {
-          role: "system",
-          content: "You are a startup analyst. Always respond with valid JSON only.",
-        },
+        { role: "system", content: system },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
@@ -54,7 +57,8 @@ async function callOpenAI(
 async function callAnthropic(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system: string
 ): Promise<string> {
   const res = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
@@ -66,8 +70,7 @@ async function callAnthropic(
     body: JSON.stringify({
       model,
       max_tokens: 8192,
-      system:
-        "You are a startup analyst. Always respond with valid JSON only, no markdown fences.",
+      system,
       messages: [{ role: "user", content: prompt }],
     }),
   });
@@ -89,7 +92,8 @@ const OPENROUTER_FALLBACK_MODEL = "openrouter/free";
 async function callOpenRouterOnce(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system: string
 ): Promise<{ ok: true; content: string } | { ok: false; status: number; body: string }> {
   const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
     method: "POST",
@@ -103,10 +107,7 @@ async function callOpenRouterOnce(
       model,
       max_tokens: 4096,
       messages: [
-        {
-          role: "system",
-          content: "You are a startup analyst. Always respond with valid JSON only.",
-        },
+        { role: "system", content: system },
         { role: "user", content: prompt },
       ],
       response_format: { type: "json_object" },
@@ -127,7 +128,8 @@ async function callOpenRouterOnce(
 async function callOpenRouter(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system: string
 ): Promise<string> {
   const { parseOpenRouterError, sleep } = await import("./openrouter-errors.js");
 
@@ -140,7 +142,12 @@ async function callOpenRouter(
 
   for (const currentModel of modelsToTry) {
     for (let attempt = 0; attempt < 3; attempt++) {
-      const result = await callOpenRouterOnce(prompt, currentModel, apiKey);
+      const result = await callOpenRouterOnce(
+        prompt,
+        currentModel,
+        apiKey,
+        system
+      );
 
       if (result.ok) {
         if (currentModel !== model) {
@@ -171,20 +178,21 @@ export async function callLlmProvider(
   provider: LlmProvider,
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system: string = DEFAULT_SYSTEM
 ): Promise<string> {
   switch (provider) {
     case "gemini":
-      return callGemini(prompt, model, apiKey);
+      return callGemini(prompt, model, apiKey, system);
     case "openai":
-      return callOpenAI(prompt, model, apiKey);
+      return callOpenAI(prompt, model, apiKey, system);
     case "anthropic":
-      return callAnthropic(prompt, model, apiKey);
+      return callAnthropic(prompt, model, apiKey, system);
     case "openrouter":
-      return callOpenRouter(prompt, model, apiKey);
+      return callOpenRouter(prompt, model, apiKey, system);
     case "ollama": {
       const { callOllamaChat } = await import("./ollama.js");
-      return callOllamaChat(prompt, model, apiKey);
+      return callOllamaChat(prompt, model, apiKey, system);
     }
     default:
       throw new Error(`Unknown provider: ${provider}`);

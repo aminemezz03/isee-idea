@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Globe, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { StatusLine } from "@/components/StatusLine";
 import { TextShimmer } from "@/components/ui/shimmer-text";
 
@@ -10,30 +11,30 @@ interface LoadingScreenProps {
   phase: LoadingPhase;
 }
 
-const PHASE_CONFIG = {
-  understand: {
-    title: "Comprehending your idea",
-    steps: [
-      "Parsing your raw prompt…",
-      "Identifying target audience…",
-      "Mapping core problem & MVP scope…",
-      "Building AI comprehension…",
-    ],
-  },
-  analyze: {
-    title: "Running deep research",
-    steps: [
-      "Scoring market potential…",
-      "Evaluating technical feasibility…",
-      "Designing autopilot strategy…",
-      "Crafting distribution playbook…",
-    ],
-  },
-};
-
 export function LoadingScreen({ visible, phase }: LoadingScreenProps) {
+  const { t } = useTranslation();
   const [stepIndex, setStepIndex] = useState(0);
-  const config = PHASE_CONFIG[phase];
+
+  const config =
+    phase === "understand"
+      ? {
+          title: t("loading.understandTitle"),
+          steps: [
+            t("loading.understandStep1"),
+            t("loading.understandStep2"),
+            t("loading.understandStep3"),
+            t("loading.understandStep4"),
+          ],
+        }
+      : {
+          title: t("loading.analyzeTitle"),
+          steps: [
+            t("loading.analyzeStep1"),
+            t("loading.analyzeStep2"),
+            t("loading.analyzeStep3"),
+            t("loading.analyzeStep4"),
+          ],
+        };
 
   useEffect(() => {
     if (!visible) {
@@ -89,7 +90,7 @@ export function LoadingScreen({ visible, phase }: LoadingScreenProps) {
         </div>
 
         <p className="mt-6 text-white/40 text-xs font-mono uppercase tracking-widest">
-          isee .v1 scouter
+          {t("loading.footer")}
         </p>
       </div>
     </div>

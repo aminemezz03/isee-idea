@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchModels, validateApiKey } from "@/api/client";
 import type {
   ApiKeyValidationStatus,
@@ -12,9 +13,25 @@ const SETTINGS_KEY = "isee-llm-settings";
 
 const DEFAULT_CONFIG: LlmConfig = {
   mode: "platform",
-  provider: "openrouter",
-  model: "openrouter/free",
+  provider: "ollama",
+  model: "gpt-oss:120b-cloud",
 };
+
+function isGptOssModel(model: string): boolean {
+  return model.toLowerCase().includes("gpt-oss");
+}
+
+function pickPreferredPlatformModel(
+  platform: ModelsResponse["platform"]
+): ModelsResponse["platform"][number] {
+  return (
+    platform.find((p) => p.provider === "ollama" && isGptOssModel(p.model)) ??
+    platform.find((p) => isGptOssModel(p.model)) ??
+    platform.find((p) => p.provider === "ollama") ??
+    platform.find((p) => p.model === "openrouter/free") ??
+    platform[0]
+  );
+}
 
 function loadSettings(): LlmConfig {
   try {
@@ -27,6 +44,7 @@ function loadSettings(): LlmConfig {
 }
 
 export function useLlmSettings() {
+  const { t, i18n } = useTranslation();
   const [config, setConfigState] = useState<LlmConfig>(loadSettings);
   const [models, setModels] = useState<ModelsResponse | null>(null);
   const [modelsLoading, setModelsLoading] = useState(true);
@@ -48,31 +66,32 @@ export function useLlmSettings() {
             const match = data.platform.find(
               (p) => p.provider === prev.provider && p.model === prev.model
             );
-            if (match) {
-              if (
-                prev.provider === "openrouter" &&
-                prev.model.includes("gemma") &&
-                prev.model.includes(":free")
-              ) {
-                const fallback = data.platform.find(
-                  (p) => p.model === "openrouter/free"
-                );
-                if (fallback) {
-                  const next = {
-                    mode: "platform" as const,
-                    provider: fallback.provider,
-                    model: fallback.model,
-                  };
-                  localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
-                  return next;
-                }
-              }
-              return prev;
+
+            // Prefer GPT OSS as the default platform model
+            const gptOss = data.platform.find(
+              (p) => p.provider === "ollama" && isGptOssModel(p.model)
+            );
+            const shouldPreferGptOss =
+              !!gptOss &&
+              (!match ||
+                prev.model === "openrouter/free" ||
+                (prev.provider === "openrouter" &&
+                  prev.model.includes("gemma") &&
+                  prev.model.includes(":free")));
+
+            if (shouldPreferGptOss && gptOss) {
+              const next = {
+                mode: "platform" as const,
+                provider: gptOss.provider,
+                model: gptOss.model,
+              };
+              localStorage.setItem(SETTINGS_KEY, JSON.stringify(next));
+              return next;
             }
-            const preferred =
-              data.platform.find((p) => p.provider === "ollama") ??
-              data.platform.find((p) => p.model === "openrouter/free") ??
-              data.platform[0];
+
+            if (match) return prev;
+
+            const preferred = pickPreferredPlatformModel(data.platform);
             const next = {
               mode: "platform" as const,
               provider: preferred.provider,
@@ -93,12 +112,12 @@ export function useLlmSettings() {
         setModels(null);
         setApiKeyMessage(
           import.meta.env.PROD
-            ? "Could not load isee models. Redeploy Netlify after setting VITE_API_URL, or check Render is running."
-            : "Could not load models. Is the server running?"
+            ? t("errors.modelsLoadProd")
+            : t("errors.modelsLoadDev")
         );
       })
       .finally(() => setModelsLoading(false));
-  }, []);
+  }, [t]);
 
   const persist = useCallback((next: LlmConfig) => {
     setConfigState(next);
@@ -118,17 +137,17 @@ export function useLlmSettings() {
 
       if (!key) {
         setApiKeyStatus("invalid");
-        setApiKeyMessage("Enter an API key to verify.");
+        setApiKeyMessage(t("errors.enterKeyToVerify"));
         setAvailableCustomModels([]);
         return false;
       }
 
       setApiKeyStatus("checking");
-      setApiKeyMessage("Verifying your API key…");
+      setApiKeyMessage(t("errors.verifyingKey"));
       setAvailableCustomModels([]);
 
       try {
-        const result = await validateApiKey(provider, key);
+        const result = await validateApiKey(provider, key, i18n.language);
 
         if (result.valid && result.models?.length) {
           setAvailableCustomModels(result.models);
@@ -153,23 +172,23 @@ export function useLlmSettings() {
         return false;
       } catch {
         setApiKeyStatus("invalid");
-        setApiKeyMessage("Could not verify key. Is the server running?");
+        setApiKeyMessage(t("errors.verifyFailed"));
         setAvailableCustomModels([]);
         return false;
       }
     },
-    [config, persist]
+    [config, persist, t, i18n.language]
   );
 
   const setMode = useCallback(
     (mode: LlmMode) => {
       resetValidation();
       if (mode === "platform" && models?.platform.length) {
-        const first = models.platform[0];
+        const preferred = pickPreferredPlatformModel(models.platform);
         persist({
           mode: "platform",
-          provider: first.provider,
-          model: first.model,
+          provider: preferred.provider,
+          model: preferred.model,
         });
       } else {
         const provider = config.provider ?? "gemini";

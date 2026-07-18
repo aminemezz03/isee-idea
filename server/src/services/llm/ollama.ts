@@ -13,8 +13,8 @@ export function curateOllamaPlatformModels(
   models: ProviderModel[]
 ): ProviderModel[] {
   const score = (id: string): number => {
-    if (id.includes("cloud")) return 95;
-    if (id.includes("gpt-oss")) return 90;
+    if (id.includes("gpt-oss")) return 100;
+    if (id.includes("cloud")) return 90;
     if (id.includes("gemma4")) return 85;
     if (id.includes("qwen3")) return 80;
     if (id.includes("deepseek")) return 78;
@@ -40,6 +40,7 @@ export function curateOllamaPlatformModels(
 export function defaultOllamaModel(models: ProviderModel[]): string {
   const curated = curateOllamaPlatformModels(models);
   return (
+    curated.find((m) => m.id.includes("gpt-oss"))?.id ??
     curated.find((m) => m.id.includes("cloud"))?.id ??
     curated[0]?.id ??
     "gpt-oss:120b-cloud"
@@ -75,7 +76,8 @@ export async function listOllamaModels(apiKey: string): Promise<ProviderModel[]>
 export async function callOllamaChat(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system = "You are a startup analyst. Always respond with valid JSON only."
 ): Promise<string> {
   const res = await fetch(`${OLLAMA_CLOUD_BASE}/v1/chat/completions`, {
     method: "POST",
@@ -89,7 +91,7 @@ export async function callOllamaChat(
       messages: [
         {
           role: "system",
-          content: "You are a startup analyst. Always respond with valid JSON only.",
+          content: system,
         },
         { role: "user", content: prompt },
       ],
@@ -101,7 +103,7 @@ export async function callOllamaChat(
   if (!res.ok) {
     const body = await res.text();
     if (res.status === 400 && body.includes("response_format")) {
-      return callOllamaNativeChat(prompt, model, apiKey);
+      return callOllamaNativeChat(prompt, model, apiKey, system);
     }
     throw new Error(`Ollama error: ${res.status} ${body.slice(0, 300)}`);
   }
@@ -121,7 +123,8 @@ export async function callOllamaChat(
 async function callOllamaNativeChat(
   prompt: string,
   model: string,
-  apiKey: string
+  apiKey: string,
+  system = "You are a startup analyst. Always respond with valid JSON only."
 ): Promise<string> {
   const res = await fetch(`${OLLAMA_CLOUD_BASE}/api/chat`, {
     method: "POST",
@@ -137,7 +140,7 @@ async function callOllamaNativeChat(
       messages: [
         {
           role: "system",
-          content: "You are a startup analyst. Always respond with valid JSON only.",
+          content: system,
         },
         { role: "user", content: prompt },
       ],

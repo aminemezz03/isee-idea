@@ -1,3 +1,5 @@
+import { t, type Locale } from "../../i18n.js";
+
 export interface ParsedOpenRouterError {
   status: number;
   message: string;
@@ -42,20 +44,23 @@ export function parseOpenRouterError(
   return { status, message, retryable };
 }
 
-export function formatOpenRouterErrorMessage(parsed: ParsedOpenRouterError): string {
+export function formatOpenRouterErrorMessage(
+  parsed: ParsedOpenRouterError,
+  locale: Locale = "en"
+): string {
   const { status, message } = parsed;
 
   if (status === 429 || message.includes("rate-limited") || message.includes("rate limit")) {
-    return "This free model is temporarily rate-limited. Wait a minute and try again, or switch to “OpenRouter Free” in AI settings.";
+    return t(locale).rateLimited;
   }
   if (status === 402 || message.includes("credit")) {
-    return "Insufficient OpenRouter credits. Try a free model (marked :free).";
+    return t(locale).insufficientCredits;
   }
   if (status === 401 || status === 403) {
-    return "Invalid API key for OpenRouter.";
+    return t(locale).invalidOpenRouterKey;
   }
   if (status === 404 || message.includes("not found")) {
-    return "Model not found. Pick a different model in AI settings.";
+    return t(locale).modelNotFound;
   }
 
   return message.length > 220 ? message.slice(0, 220) + "…" : message;

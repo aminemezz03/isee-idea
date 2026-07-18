@@ -1,10 +1,12 @@
 import type { LlmConfig } from "../../llm-types.js";
+import { systemPromptForLocale, type Locale } from "../../i18n.js";
 import { resolveApiKey } from "./config.js";
 import { callLlmProvider } from "./providers.js";
 
 export async function callLlm(
   prompt: string,
-  config: LlmConfig
+  config: LlmConfig,
+  locale: Locale = "en"
 ): Promise<string> {
   const apiKey = resolveApiKey(config);
   if (!apiKey) {
@@ -15,5 +17,11 @@ export async function callLlm(
     );
   }
 
-  return callLlmProvider(config.provider, prompt, config.model, apiKey);
+  return callLlmProvider(
+    config.provider,
+    prompt,
+    config.model,
+    apiKey,
+    systemPromptForLocale(locale)
+  );
 }

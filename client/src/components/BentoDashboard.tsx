@@ -1,4 +1,5 @@
 import { Sparkles, RotateCcw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { AnalysisResponse } from "@/types";
 
 interface BentoDashboardProps {
@@ -24,6 +25,7 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
 }
 
 export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
+  const { t } = useTranslation();
   const { breakdownScores: b } = analysis;
 
   return (
@@ -33,11 +35,11 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
           <div className="flex items-center gap-2 mb-1">
             <Sparkles size={16} className="text-indigo-300 shrink-0 sm:w-[18px] sm:h-[18px]" />
             <span className="font-mono text-[10px] sm:text-xs uppercase text-white/40 tracking-widest">
-              Deep research complete
+              {t("dashboard.badge")}
             </span>
           </div>
           <h2 className="font-serif-display text-2xl sm:text-4xl md:text-5xl text-white tracking-tight">
-            Analytical Dashboard
+            {t("dashboard.title")}
           </h2>
         </div>
         <button
@@ -46,17 +48,16 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
           className="glass-btn flex items-center justify-center gap-2 w-full sm:w-auto shrink-0"
         >
           <RotateCcw size={16} />
-          New Scout
+          {t("dashboard.newScout")}
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 auto-rows-auto">
-        {/* Score hero */}
         <div
           className="md:col-span-4 glass-card-accent glass-card-animate p-4 sm:p-6 flex flex-col justify-between min-h-[180px] sm:min-h-[220px]"
         >
           <p className="font-mono text-xs uppercase text-indigo-300/80 tracking-wider">
-            Overall Viability
+            {t("dashboard.overallViability")}
           </p>
           <p className="font-serif-display text-5xl sm:text-7xl md:text-8xl text-white my-2">
             {analysis.score.toFixed(1)}
@@ -66,56 +67,53 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
           </p>
         </div>
 
-        {/* Breakdown */}
         <div
           className="md:col-span-8 glass-card glass-card-animate p-4 sm:p-6"
           style={{ animationDelay: "0.05s" }}
         >
           <h3 className="font-display font-bold text-lg text-white mb-5">
-            Breakdown Scores
+            {t("dashboard.breakdownScores")}
           </h3>
           <div className="grid sm:grid-cols-2 gap-5">
-            <ScoreBar label="Market Potential" value={b.marketPotential} />
-            <ScoreBar label="Technical Feasibility" value={b.technicalFeasibility} />
-            <ScoreBar label="Automation Viability" value={b.automationViability} />
-            <ScoreBar label="Distribution Ease" value={b.distributionEase} />
+            <ScoreBar label={t("dashboard.marketPotential")} value={b.marketPotential} />
+            <ScoreBar label={t("dashboard.technicalFeasibility")} value={b.technicalFeasibility} />
+            <ScoreBar label={t("dashboard.automationViability")} value={b.automationViability} />
+            <ScoreBar label={t("dashboard.distributionEase")} value={b.distributionEase} />
           </div>
         </div>
 
-        {/* Market valuation */}
         <div
           className="md:col-span-6 glass-card-emerald glass-card-animate p-4 sm:p-6"
           style={{ animationDelay: "0.1s" }}
         >
           <h3 className="font-display font-bold text-lg text-white mb-4">
-            Market Valuation
+            {t("dashboard.marketValuation")}
           </h3>
           <div className="space-y-4 text-sm">
-            <Field label="Market Size" value={analysis.marketValuation.marketSize} />
-            <Field label="Growth Rate" value={analysis.marketValuation.growthRate} />
+            <Field label={t("dashboard.marketSize")} value={analysis.marketValuation.marketSize} />
+            <Field label={t("dashboard.growthRate")} value={analysis.marketValuation.growthRate} />
             <Field
-              label="Competitor Landscape"
+              label={t("dashboard.competitorLandscape")}
               value={analysis.marketValuation.competitorLandscape}
             />
             <Field
-              label="Financial Potential"
+              label={t("dashboard.financialPotential")}
               value={analysis.marketValuation.financialPotential}
             />
           </div>
         </div>
 
-        {/* Demographics */}
         <div
           className="md:col-span-6 glass-card-teal glass-card-animate p-4 sm:p-6"
           style={{ animationDelay: "0.15s" }}
         >
           <h3 className="font-display font-bold text-lg text-white mb-4">
-            Optimal Demographics
+            {t("dashboard.optimalDemographics")}
           </h3>
           <div className="space-y-4 text-sm">
             <div>
               <p className="font-mono text-xs uppercase text-white/40 mb-2">
-                Best Regions
+                {t("dashboard.bestRegions")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {analysis.optimalDemographics.bestRegions.map((r) => (
@@ -130,7 +128,7 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
             </div>
             <div>
               <p className="font-mono text-xs uppercase text-white/40 mb-2">
-                Best Industries
+                {t("dashboard.bestIndustries")}
               </p>
               <div className="flex flex-wrap gap-2">
                 {analysis.optimalDemographics.bestIndustries.map((ind) => (
@@ -144,36 +142,35 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
               </div>
             </div>
             <Field
-              label="Target Persona"
+              label={t("dashboard.targetPersona")}
               value={analysis.optimalDemographics.targetUserPersona}
             />
           </div>
         </div>
 
-        {/* Budget & Automation */}
         <div
           className="md:col-span-7 glass-card glass-card-animate p-4 sm:p-6"
           style={{ animationDelay: "0.2s" }}
         >
           <h3 className="font-display font-bold text-lg text-white mb-4">
-            Budget & Autopilot Strategy
+            {t("dashboard.budgetAutopilot")}
           </h3>
           <div className="space-y-3 text-sm mb-5">
             <Field
-              label="Setup Complexity"
+              label={t("dashboard.setupComplexity")}
               value={analysis.budgetAndAutomation.setupComplexity}
             />
             <Field
-              label="Build-Once Feasibility"
+              label={t("dashboard.buildOnce")}
               value={analysis.budgetAndAutomation.buildOnceFeasibility}
             />
             <Field
-              label="Monthly Op Cost"
+              label={t("dashboard.monthlyOpCost")}
               value={analysis.budgetAndAutomation.operationalCostEstimate}
             />
           </div>
           <p className="font-mono text-xs uppercase text-white/40 mb-3">
-            Automation Strategy
+            {t("dashboard.automationStrategy")}
           </p>
           <ol className="space-y-2">
             {analysis.budgetAndAutomation.automationStrategy.map((step, i) => (
@@ -185,13 +182,12 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
           </ol>
         </div>
 
-        {/* Distribution */}
         <div
           className="md:col-span-5 glass-card-accent glass-card-animate p-4 sm:p-6"
           style={{ animationDelay: "0.25s" }}
         >
           <h3 className="font-display font-bold text-lg text-white mb-4">
-            Distribution Playbook
+            {t("dashboard.distributionPlaybook")}
           </h3>
           <div className="space-y-3 mb-5">
             {analysis.distributionStrategy.channels.map((ch) => (
@@ -210,7 +206,7 @@ export function BentoDashboard({ analysis, onNewScout }: BentoDashboardProps) {
             ))}
           </div>
           <p className="font-mono text-xs uppercase text-indigo-300/70 mb-2">
-            First 100 Users Plan
+            {t("dashboard.first100Plan")}
           </p>
           <ol className="space-y-2 text-sm">
             {analysis.distributionStrategy.first100UsersPlan.map((step, i) => (

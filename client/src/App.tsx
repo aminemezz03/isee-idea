@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { analyzeIdea, understandIdea } from "@/api/client";
 import { BentoDashboard } from "@/components/BentoDashboard";
 import { ConfirmationStage } from "@/components/ConfirmationStage";
@@ -13,6 +14,7 @@ import { SaveBoard } from "@/components/SaveBoard";
 import { LiquidGlassHero } from "@/components/ui/liquid-glass-hero";
 import { useLlmSettings } from "@/hooks/useLlmSettings";
 import { useProjectHistory } from "@/hooks/useProjectHistory";
+import { resolveLocale } from "@/i18n";
 import type {
   AnalysisResponse,
   ApiKeyValidationStatus,
@@ -26,27 +28,30 @@ type Stage = "input" | "confirm" | "dashboard";
 function validateLlm(
   config: LlmConfig,
   platformAvailable: boolean,
-  apiKeyStatus: ApiKeyValidationStatus
+  apiKeyStatus: ApiKeyValidationStatus,
+  t: (key: string) => string
 ): string | null {
   if (config.mode === "custom") {
     if (!config.apiKey?.trim()) {
-      return "Please enter your API key in AI Model settings.";
+      return t("errors.enterApiKey");
     }
     if (apiKeyStatus === "checking") {
-      return "Your API key is still being verified. Please wait.";
+      return t("errors.keyChecking");
     }
     if (apiKeyStatus !== "valid") {
-      return "Please verify your API key is valid before scouting.";
+      return t("errors.keyInvalid");
     }
     return null;
   }
   if (!platformAvailable) {
-    return "No isee models available. Switch to Your API Key mode and enter your key.";
+    return t("errors.noPlatformModels");
   }
   return null;
 }
 
 function App() {
+  const { t, i18n } = useTranslation();
+  const locale = resolveLocale(i18n.language);
   const { history, saveItem, updateItem, deleteItem } = useProjectHistory();
   const llm = useLlmSettings();
   const [stage, setStage] = useState<Stage>("input");
@@ -88,7 +93,12 @@ function App() {
 
   const handleSubmitIdea = useCallback(
     async (idea: string) => {
-      const err = validateLlm(llm.config, llm.models?.platformAvailable ?? false, llm.apiKeyStatus);
+      const err = validateLlm(
+        llm.config,
+        llm.models?.platformAvailable ?? false,
+        llm.apiKeyStatus,
+        t
+      );
       if (err) {
         alert(err);
         return;
@@ -99,7 +109,7 @@ function App() {
       setScoutError(null);
       setPrompt(idea);
       try {
-        const result = await understandIdea(idea, llm.config);
+        const result = await understandIdea(idea, llm.config, locale);
         setComprehension(result);
         const id = crypto.randomUUID();
         const item: ProjectHistoryItem = {
@@ -112,35 +122,60 @@ function App() {
         setActiveId(id);
         setStage("confirm");
       } catch (e) {
-        const msg = e instanceof Error ? e.message : "Failed to understand idea.";
+        const msg = e instanceof Error ? e.message : t("errors.understandFailed");
         setScoutError(msg);
         alert(msg);
       } finally {
         setLoading(false);
       }
     },
-    [llm.config, llm.models?.platformAvailable, saveItem]
+    [llm.config, llm.models?.platformAvailable, llm.apiKeyStatus, saveItem, t, locale]
   );
 
   const handleConfirm = useCallback(async () => {
     if (!prompt || !comprehension || !activeId) return;
 
-    const err = validateLlm(llm.config, llm.models?.platformAvailable ?? false, llm.apiKeyStatus);
+    const err = validateLlm(
+      llm.config,
+      llm.models?.platformAvailable ?? false,
+      llm.apiKeyStatus,
+      t
+    );
     if (err) {
       alert(err);
       return;
     }
 
-    setLoadingPhase("analyze");
+    const refinement = correction.trim();
     setLoading(true);
     setScoutError(null);
+
     try {
-      const result = await analyzeIdea(prompt, llm.config, correction || undefined);
+      let finalComprehension = comprehension;
+
+      // If the user refined the idea, re-run comprehension so Affinage is applied
+      if (refinement) {
+        setLoadingPhase("understand");
+        finalComprehension = await understandIdea(
+          `${prompt}\n\nUser refinement (must apply): ${refinement}`,
+          llm.config,
+          locale
+        );
+        setComprehension(finalComprehension);
+      }
+
+      setLoadingPhase("analyze");
+      const result = await analyzeIdea(
+        prompt,
+        llm.config,
+        refinement || undefined,
+        locale
+      );
       setAnalysis(result);
       updateItem({
         id: activeId,
         prompt,
-        understandResponse: comprehension,
+        understandResponse: finalComprehension,
         analysisResponse: result,
         createdAt:
           history.find((h) => h.id === activeId)?.createdAt ??
@@ -148,7 +183,7 @@ function App() {
       });
       setStage("dashboard");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Failed to run deep research.";
+      const msg = e instanceof Error ? e.message : t("errors.analyzeFailed");
       setScoutError(msg);
       setStage("confirm");
       setAnalysis(null);
@@ -165,6 +200,9 @@ function App() {
     updateItem,
     llm.config,
     llm.models?.platformAvailable,
+    llm.apiKeyStatus,
+    t,
+    locale,
   ]);
 
   const toggleSidebar = useCallback(() => {
@@ -263,14 +301,14 @@ function App() {
             {stage === "dashboard" && !analysis && (
               <div className="max-w-lg mx-auto px-4 py-16 text-center">
                 <p className="text-white/70 mb-4">
-                  {scoutError ?? "Something went wrong loading your dashboard."}
+                  {scoutError ?? t("dashboard.loadError")}
                 </p>
                 <button
                   type="button"
                   onClick={() => setStage("confirm")}
                   className="glass-btn"
                 >
-                  Back to confirm
+                  {t("dashboard.backToConfirm")}
                 </button>
               </div>
             )}
