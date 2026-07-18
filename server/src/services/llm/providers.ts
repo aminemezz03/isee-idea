@@ -100,7 +100,7 @@ async function callOpenRouterOnce(
     headers: {
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      "HTTP-Referer": "https://isee.app",
+      "HTTP-Referer": "https://iseeidea.link",
       "X-Title": "isee v1",
     },
     body: JSON.stringify({

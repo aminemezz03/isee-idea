@@ -54,7 +54,7 @@ Split deploy: **Netlify** (frontend) + a **Node backend** (Express API).
    - **Instance Type:** **Free**
 4. **Environment variables:**
    - `OPENROUTER_API_KEY`, `OLLAMA_API_KEY`, etc.
-   - `CLIENT_ORIGIN` = `https://iseeidea.netlify.app` (your Netlify URL)
+   - `CLIENT_ORIGIN` = `https://iseeidea.link,https://iseeidea.netlify.app` (custom domain + Netlify URL)
 5. Add card if asked ($1 verification hold only) → Deploy → copy URL, e.g. `https://isee-api.onrender.com`
 
 > Free tier sleeps after ~15 min idle; cold start ~30–60s.
@@ -72,9 +72,29 @@ Split deploy: **Netlify** (frontend) + a **Node backend** (Express API).
 
 > **404 "Page not found"?** The publish folder is wrong or `netlify.toml` wasn't on GitHub. Pull latest code and redeploy with settings above.
 
-#### 3. Link them
+#### 3. Custom domain (`iseeidea.link`)
 
-Set `VITE_API_URL` on Netlify to your Render URL. Set `CLIENT_ORIGIN` on Render to your Netlify URL.
+1. Netlify → your site → **Domain management** → **Add a domain** → enter `iseeidea.link`.
+2. Also add `www.iseeidea.link` if you want (Netlify can redirect www → apex or the reverse).
+3. Netlify shows DNS records. At your registrar (where you bought the domain), create:
+
+   | Type | Name / Host | Value |
+   |------|-------------|--------|
+   | **A** | `@` (or blank / `iseeidea.link`) | `75.2.60.5` *(Netlify load balancer — confirm in Netlify UI)* |
+   | **CNAME** | `www` | `your-site-name.netlify.app` *(exact value shown in Netlify)* |
+
+   Some registrars use Netlify DNS: in Netlify choose **Use Netlify DNS**, then set your domain’s **nameservers** to the ones Netlify gives you (easier long-term).
+
+4. Wait for DNS (often minutes, sometimes up to 24–48h). Netlify will provision HTTPS automatically.
+5. On **Render**, update `CLIENT_ORIGIN` to include the new domain:
+   ```
+   https://iseeidea.link,https://www.iseeidea.link,https://iseeidea.netlify.app
+   ```
+   Then **Manual Deploy → Deploy latest** on Render (env var change needs a restart).
+
+#### 4. Link them
+
+Set `VITE_API_URL` on Netlify to your Render URL. Set `CLIENT_ORIGIN` on Render to your Netlify / custom domain URLs.
 
 ---
 
